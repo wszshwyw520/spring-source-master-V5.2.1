@@ -87,6 +87,7 @@ public class InjectionMetadata {
 				if (logger.isTraceEnabled()) {
 					logger.trace("Processing injected element of bean '" + beanName + "': " + element);
 				}
+				//属性值或方法装配
 				element.inject(target, beanName, pvs);
 			}
 		}
@@ -177,6 +178,7 @@ public class InjectionMetadata {
 			if (this.isField) {
 				Field field = (Field) this.member;
 				ReflectionUtils.makeAccessible(field);
+				//属性注入
 				field.set(target, getResourceToInject(target, requestingBeanName));
 			}
 			else {

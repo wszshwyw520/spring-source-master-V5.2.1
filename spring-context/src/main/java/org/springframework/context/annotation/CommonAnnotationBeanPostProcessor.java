@@ -294,8 +294,11 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 	@Override
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
+		//扫描@PostConstruct,@PreDestory注解
 		super.postProcessMergedBeanDefinition(beanDefinition, beanType, beanName);
+		//扫描@Resource注解 injectedElements对象包含了@Resource修饰的所有属性和方法的集合
 		InjectionMetadata metadata = findResourceMetadata(beanName, beanType, null);
+		//放入到全局变量中，方便后面使用
 		metadata.checkConfigMembers(beanDefinition);
 	}
 
@@ -316,8 +319,10 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 	@Override
 	public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) {
+		//拿到有@Resource注解修饰的所有类的方法,属性集合
 		InjectionMetadata metadata = findResourceMetadata(beanName, bean.getClass(), pvs);
 		try {
+			//开始实现@Resource注解的支撑
 			metadata.inject(bean, beanName, pvs);
 		}
 		catch (Throwable ex) {
@@ -347,6 +352,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 					if (metadata != null) {
 						metadata.clear(pvs);
 					}
+					//扫描方法,属性上面的@Resource注解
 					metadata = buildResourceMetadata(clazz);
 					this.injectionMetadataCache.put(cacheKey, metadata);
 				}
@@ -375,6 +381,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 					}
 					currElements.add(new EjbRefElement(field, field, null));
 				}
+				//属性上面的@Resource注解
 				else if (field.isAnnotationPresent(Resource.class)) {
 					if (Modifier.isStatic(field.getModifiers())) {
 						throw new IllegalStateException("@Resource annotation is not supported on static fields");
@@ -411,6 +418,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 						PropertyDescriptor pd = BeanUtils.findPropertyForMethod(bridgedMethod, clazz);
 						currElements.add(new EjbRefElement(method, bridgedMethod, pd));
 					}
+					//方法上面@Resource注解
 					else if (bridgedMethod.isAnnotationPresent(Resource.class)) {
 						if (Modifier.isStatic(method.getModifiers())) {
 							throw new IllegalStateException("@Resource annotation is not supported on static methods");
@@ -427,6 +435,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 				}
 			});
 
+			//把@Resource注解修饰的属性和方法集合放入elements
 			elements.addAll(0, currElements);
 			targetClass = targetClass.getSuperclass();
 		}

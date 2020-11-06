@@ -140,6 +140,7 @@ class ConstructorResolver {
 				}
 			}
 			if (argsToResolve != null) {
+				//拿到参数值
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, constructorToUse, argsToResolve, true);
 			}
 		}
@@ -194,6 +195,7 @@ class ConstructorResolver {
 			LinkedList<UnsatisfiedDependencyException> causes = null;
 
 			for (Constructor<?> candidate : candidates) {
+				//获取构造函数的参数类型
 				Class<?>[] paramTypes = candidate.getParameterTypes();
 
 				if (constructorToUse != null && argsToUse != null && argsToUse.length > paramTypes.length) {
@@ -215,6 +217,7 @@ class ConstructorResolver {
 								paramNames = pnd.getParameterNames(candidate);
 							}
 						}
+						//参数值，不用看比较深，主要看参数如何依赖注入的
 						argsHolder = createArgumentArray(beanName, mbd, resolvedValues, bw, paramTypes, paramNames,
 								getUserDeclaredConstructor(candidate), autowiring, candidates.length == 1);
 					}
@@ -700,6 +703,7 @@ class ConstructorResolver {
 		Set<ConstructorArgumentValues.ValueHolder> usedValueHolders = new HashSet<>(paramTypes.length);
 		Set<String> autowiredBeanNames = new LinkedHashSet<>(4);
 
+		//拿到构造器的所有参数，循环遍历
 		for (int paramIndex = 0; paramIndex < paramTypes.length; paramIndex++) {
 			Class<?> paramType = paramTypes[paramIndex];
 			String paramName = (paramNames != null ? paramNames[paramIndex] : "");
@@ -757,6 +761,7 @@ class ConstructorResolver {
 							"] - did you specify the correct bean references as arguments?");
 				}
 				try {
+					//主要看这里 如何解析参数值的
 					Object autowiredArgument = resolveAutowiredArgument(
 							methodParam, beanName, autowiredBeanNames, converter, fallback);
 					args.rawArguments[paramIndex] = autowiredArgument;
@@ -854,6 +859,7 @@ class ConstructorResolver {
 			return injectionPoint;
 		}
 		try {
+			//看这里，解析过程
 			return this.beanFactory.resolveDependency(
 					new DependencyDescriptor(param, true), beanName, autowiredBeanNames, typeConverter);
 		}

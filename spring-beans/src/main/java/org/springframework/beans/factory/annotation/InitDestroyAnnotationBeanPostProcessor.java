@@ -79,9 +79,11 @@ public class InitDestroyAnnotationBeanPostProcessor
 
 	protected transient Log logger = LogFactory.getLog(getClass());
 
+	//@PostConstruct注解的字节码
 	@Nullable
 	private Class<? extends Annotation> initAnnotationType;
 
+	//@PreDestory注解的字节码
 	@Nullable
 	private Class<? extends Annotation> destroyAnnotationType;
 
@@ -125,7 +127,9 @@ public class InitDestroyAnnotationBeanPostProcessor
 
 	@Override
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
+		//这里拿到带有@PostConstruct,@PreDestory注解的方法集合
 		LifecycleMetadata metadata = findLifecycleMetadata(beanType);
+		//把这些集合放入到另外的容器中，用途：
 		metadata.checkConfigMembers(beanDefinition);
 	}
 
@@ -176,6 +180,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 
 
 	private LifecycleMetadata findLifecycleMetadata(Class<?> clazz) {
+		//先从缓存里面拿，没有进入下面代码
 		if (this.lifecycleMetadataCache == null) {
 			// Happens after deserialization, during destruction...
 			return buildLifecycleMetadata(clazz);
@@ -201,10 +206,13 @@ public class InitDestroyAnnotationBeanPostProcessor
 		Class<?> targetClass = clazz;
 
 		do {
+			//有@PostConstruct注解的方法集合
 			final List<LifecycleElement> currInitMethods = new ArrayList<>();
+			//有@PreDestory注解的方法集合
 			final List<LifecycleElement> currDestroyMethods = new ArrayList<>();
 
 			ReflectionUtils.doWithLocalMethods(targetClass, method -> {
+				//判断方面上面是否有@PostConstruct注解
 				if (this.initAnnotationType != null && method.isAnnotationPresent(this.initAnnotationType)) {
 					LifecycleElement element = new LifecycleElement(method);
 					currInitMethods.add(element);
@@ -212,6 +220,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 						logger.trace("Found init method on class [" + clazz.getName() + "]: " + method);
 					}
 				}
+				//判断方面上面是否有@PreDestory注解
 				if (this.destroyAnnotationType != null && method.isAnnotationPresent(this.destroyAnnotationType)) {
 					currDestroyMethods.add(new LifecycleElement(method));
 					if (logger.isTraceEnabled()) {
@@ -222,10 +231,12 @@ public class InitDestroyAnnotationBeanPostProcessor
 
 			initMethods.addAll(0, currInitMethods);
 			destroyMethods.addAll(currDestroyMethods);
+			//拿到当前类的父类有没有注解   就把这个类以及父类中所有包含该注解的方法加入到两个数组集合中
 			targetClass = targetClass.getSuperclass();
 		}
 		while (targetClass != null && targetClass != Object.class);
 
+		//返回一个对象，其中包含: 类字节码,@PostConstruct注解的方法集合,有@PreDestory注解的方法集合
 		return new LifecycleMetadata(clazz, initMethods, destroyMethods);
 	}
 
@@ -257,6 +268,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 		@Nullable
 		private volatile Set<LifecycleElement> checkedInitMethods;
 
+		//全局属性
 		@Nullable
 		private volatile Set<LifecycleElement> checkedDestroyMethods;
 

@@ -301,6 +301,7 @@ public abstract class AnnotatedElementUtils {
 	public static AnnotationAttributes getMergedAnnotationAttributes(
 			AnnotatedElement element, Class<? extends Annotation> annotationType) {
 
+		//获取有@Autowired属性的注解
 		AnnotationAttributes attributes = searchWithGetSemantics(element, annotationType, null,
 				new MergedAnnotationAttributesProcessor());
 		AnnotationUtils.postProcessAnnotationAttributes(element, attributes, false, false);
